@@ -1,0 +1,27 @@
+{
+  "name": "logistic-planner",
+  "version": "0.0.1",
+  "description": "Back end for logistic planner application.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "author": "Yaroslav Garkusha",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "bson": "^2.0.2",
+    "connect-mongo": "^2.0.1",
+    "connect-mongodb": "^1.1.5",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
+    "express-session": "^1.15.6",
+    "mongodb": "^3.0.4",
+    "mongoose": "^5.0.9"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.1"
+  }
+}
