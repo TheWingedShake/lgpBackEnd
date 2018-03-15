@@ -20,17 +20,20 @@ const OrderSchema = new mongoose.Schema({
     destinationFrom : {
         type: mongoose.Schema.ObjectId,
         index: true,
-        required: true
+        required: true,
+        ref: 'City'
     },
     destinationTo : {
         type: mongoose.Schema.ObjectId,
         index: true,
-        required: true
+        required: true,
+        ref: 'City'
     },
     userId : {
         type: mongoose.Schema.ObjectId,
         index: true,
-        required: true
+        required: true,
+        ref: 'User'
     },
     dateStart : {
         type: Date,

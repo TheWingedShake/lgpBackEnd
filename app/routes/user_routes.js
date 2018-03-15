@@ -1,6 +1,5 @@
-const ObjectID = require('mongodb').ObjectID;
 const User = require('../models/User');
-module.exports = function(app, db){
+module.exports = function(app){
 
     app.post('/users/signup', (req, res) => {
         const body = req.body;

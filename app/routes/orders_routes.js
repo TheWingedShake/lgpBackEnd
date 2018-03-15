@@ -1,14 +1,15 @@
-const ObjectID = require('mongodb').ObjectID;
 const Order = require('../models/Order');
-module.exports = function(app , db){
+const City = require('../models/City');
+module.exports = function(app){
 
     app.get('/orders', (req, res) => {
         try{
-            let params = {};
+            const query = Order.find();
             if(req.query && req.query['city']){
-                params.destinationFrom = req.query['city'];
+                query.where('destinationFrom').equals(req.query['city']);
             }
-            db.collection('orders').find(params).toArray((err, result) => {
+            query.populate('destinationFrom', 'name').populate('destinationTo', 'name');
+            query.exec((err, result) => {
                 if(err){
                     res.send({'error': 'Error with orders.'});
                 }else{
@@ -23,8 +24,10 @@ module.exports = function(app , db){
     app.get('/orders/:id', (req, res) => {
         const id = req.params.id;
         try{
-            const details = {'_id': new ObjectID(id)};
-            db.collection('orders').findOne(details, (err, item) => {
+            Order.findById(id)
+            .populate('destinationFrom')
+            .populate('destinationTo')
+            .exec((err, item) => {
                 if(err){
                     res.send({'error': 'Error with order.'});
                 }else{
@@ -42,7 +45,8 @@ module.exports = function(app , db){
             name: body.name,
             destinationFrom: body.destinationFrom,
             destinationTo: body.destinationTo,
-            dateStart: body.dateStart
+            dateStart: body.dateStart,
+            description: body.description
         };
         const userId = req.session.userId;
         if(!userId){
@@ -51,17 +55,14 @@ module.exports = function(app , db){
         }
         if(body){
             orderData.type = 'client';
-            orderData.destinationFrom = '5a9dd4540bf4f316a4243729';
-            orderData.destinationTo = '5a9dd4840bf4f316a424372a';
             orderData.userId = userId;
             orderData.dateStart = Date.now();
-
             Order.create(orderData, (err, order) => {
                 let result = {}
                 if(err){
                     result.error = 'Creating an order returned an error';
                 }else{
-                    result.message = 'Ok';
+                    result._id = order._id;
                 }
                 res.send(result);
             });
@@ -72,31 +73,37 @@ module.exports = function(app , db){
 
     app.put('/orders/:id', (req, res) => {
         const id = req.params.id;
-        const details = {'_id': new ObjectID(id)};
-        const order = {
+        const orderData = {
             name: req.body.name,
             destinationFrom: req.body.destinationFrom,
             destinationTo: req.body.destinationTo,
-            dateStart: req.body.dateStart
+            //dateStart: req.body.dateStart,
+            description: req.body.description
         };
-        db.collection('orders').update(details, order, (err, result) => {
+        Order.findById(id, (err, item) => {
             if(err){
-                res.send({error: 'Updating order returned an error.'});
+                res.send({error: 'Order does not exists'});
             }else{
-                res.send({data: 'Updated successfully.'});
+                item.set(orderData);
+                item.save((error, updatedItem) => {
+                    if(error){
+                        res.send({error: 'Updating order returned an error.'});
+                    }else{
+                        res.send({message: 'Updated successfully.'});
+                    }
+                });
             }
         });
     });
 
     app.delete('/orders/:id', (req, res) => {
         const id = req.params.id;
-        const details = {'_id': new ObjectID(id)};
-        db.collection('orders').remove(details, (err, item) => {
+        Order.remove({_id: id}, err => {
             if(err){
                 res.send({error: 'Deleting order returned en error.'});
             }else{
                 res.send({data: 'Order '+id+' deleted successfully.'});
-            }
+            } 
         });
     });
 

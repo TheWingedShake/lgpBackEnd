@@ -1,20 +1,24 @@
-
-ObjectID = require('mongodb').ObjectID;
-module.exports = function(app, db){
+const City = require('../models/City');
+module.exports = function(app){
     app.get('/cities', (req, res) => {
-        db.collection('cities').find({}).toArray((err, result) => {
-            if(err){
-                res.send({'error': 'Somethind went wrong'});
-            }else{
-                res.send(result);
-            }
-        });
+        try{
+            const query = City.find();
+            query.exec((err, result) => {
+                if(err){
+                    res.send({'error': 'Error with cities.'});
+                }else{
+                    res.send(result);
+                }
+            });
+        }catch(exception){
+            res.send({'error': 'There is an exception with cities.'});
+        }
     });
     app.get('/cities/:id', (req, res) => {
         const id = req.params.id;
         try{
-            const details = {'_id': new ObjectID(id)};
-            db.collection('cities').findOne(details, (err, item) => {
+            City.findById(id)
+            .exec((err, item) => {
                 if(err){
                     res.send({'error': 'Something went wrong'});
                 }else{
