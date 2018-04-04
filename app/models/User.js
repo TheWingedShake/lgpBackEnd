@@ -26,16 +26,14 @@ var UserSchema = new mongoose.Schema({
         required: true
     }
 });
-UserSchema.pre('save', function(next){
-    var user = this;
-    bcrypt.hash(user.password, 10, function (err, hash){
-        if (err) {
-            return next(err);
+UserSchema.statics.hashPassword = function(password, callback){
+    bcrypt.hash(password, 10, (err, hash) => {
+        if (err){
+            return callback(err);
         }
-        user.password = hash;
-        next();
-    });
-});
+        return callback(null, hash);
+    })
+};
 UserSchema.statics.authenticate = function(email, password, callback){
     User.findOne({email: email}).exec(function (err, user) {
         if(err){

@@ -29,7 +29,7 @@ const OrderSchema = new mongoose.Schema({
         required: true,
         ref: 'City'
     },
-    userId : {
+    user : {
         type: mongoose.Schema.ObjectId,
         index: true,
         required: true,
@@ -48,5 +48,15 @@ const OrderSchema = new mongoose.Schema({
         trim: true
     }
 });
+OrderSchema.statics.populateFromRequest = function(body){
+    var orderData = {},
+        editableFields = ['isCompleted', 'description', 'destinationFrom', 'destinationTo', 'dateStart'];
+    for(let i in body){
+        if(editableFields.indexOf(i) > -1){
+            orderData[i] = body[i];
+        }
+    }
+    return orderData;
+};
 const Order = mongoose.model('Order', OrderSchema);
 module.exports = Order;

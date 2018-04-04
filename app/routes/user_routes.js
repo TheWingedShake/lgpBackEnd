@@ -7,18 +7,24 @@ module.exports = function(app){
             const userData = {
                 email: body.email,
                 firstName: body.firstName,
-                lastName: body.lastName,
-                password: body.password
+                lastName: body.lastName
             };
-            User.create(userData, (err, user) => {
-                let result = {};
+            User.hashPassword(body.password, (err, hash) => {
                 if(err){
-                    result.error = err;
+                    res.send({error: 'hash error'});
                 }else{
-                    result.message = 'Ok';
+                    userData.password = hash;
+                    User.create(userData, (err, user) => {
+                        let result = {};
+                        if(err){
+                            result.error = err;
+                        }else{
+                            result.message = 'Ok';
+                        }
+                        res.send(result);
+                    });
                 }
-                res.send(result);
-            });
+            });            
         }else{
             res.send({error: 'Data invalid'});
         }
@@ -67,5 +73,54 @@ module.exports = function(app){
             }
         });
     });
+
+    app.get('/users/view/:id', (req, res) => {
+        const id = req.params.id;
+        User.findById(id).exec((err, user) => {
+            if(err){
+                res.send({error: 'Error with user retrieving.'});
+            }else{
+                if(user === null){
+                    res.send({error: 'User does not exists.'});
+                }else{
+                    res.send({
+                        id: user._id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        dateEntered: user.dateEntered
+                    });
+                }
+            }
+        })
+    });
+
+    app.put('/users/:id', (req, res) => {
+        const id = req.params.id;
+        const userData = {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName
+        };
+        if(!id || id != req.session.userId){
+            res.status(403).send({error: 'Not authorized.'});
+        }
+        User.findById(id, (err, item) => {
+            if(err){
+                res.send({error: 'Error with user retrieving.'});
+            }else{
+                if(item === null){
+                    res.send({error: 'User does not exists.'});
+                }else{
+                    item.set(userData);
+                    item.save((err, updatedItem) => {
+                        if(err){
+                            res.send({error: 'Error with user updating.'});
+                        }else{
+                            res.send({message: 'Updated successfully.'});
+                        }
+                    })
+                }
+            }
+        });
+    })
 
 };

@@ -55,10 +55,7 @@ app.use(function(req, res, next){
     next();
 }});
 
-MongoClient.connect(db.url, (err, client) => {
-    if (err) return console.log(err)
-    require('./app/routes')(app, client.db('logisticplanner'));
-    app.listen(port, () => {
-      console.log('We are live on ' + port);
-    });               
-})
+require('./app/routes')(app);
+app.listen(port, () => {
+  console.log('We are live on ' + port);
+});

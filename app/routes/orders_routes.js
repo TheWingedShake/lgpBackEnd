@@ -1,13 +1,19 @@
 const Order = require('../models/Order');
 const City = require('../models/City');
+const User = require('../models/User');
 module.exports = function(app){
 
     app.get('/orders', (req, res) => {
         try{
             const query = Order.find();
-            if(req.query && req.query['city']){
-                query.where('destinationFrom').equals(req.query['city']);
+            const isCompleted = req.query && req.query['isCompleted'] || false;
+            if(req.query && req.query['cityFrom']){
+                query.where('destinationFrom').equals(req.query['cityFrom']);
             }
+            if(req.query && req.query['cityTo']){
+                query.where('destinationTo').equals(req.query['cityTo']);
+            }
+            query.where('isCompleted').equals(isCompleted);
             query.populate('destinationFrom', 'name').populate('destinationTo', 'name');
             query.exec((err, result) => {
                 if(err){
@@ -27,6 +33,7 @@ module.exports = function(app){
             Order.findById(id)
             .populate('destinationFrom')
             .populate('destinationTo')
+            .populate('user', 'firstName lastName')
             .exec((err, item) => {
                 if(err){
                     res.send({'error': 'Error with order.'});
@@ -55,7 +62,7 @@ module.exports = function(app){
         }
         if(body){
             orderData.type = 'client';
-            orderData.userId = userId;
+            orderData.user = userId;
             orderData.dateStart = Date.now();
             Order.create(orderData, (err, order) => {
                 let result = {}
@@ -73,14 +80,12 @@ module.exports = function(app){
 
     app.put('/orders/:id', (req, res) => {
         const id = req.params.id;
-        const orderData = {
-            name: req.body.name,
-            destinationFrom: req.body.destinationFrom,
-            destinationTo: req.body.destinationTo,
-            //dateStart: req.body.dateStart,
-            description: req.body.description
-        };
+        const orderData = Order.populateFromRequest(req.body);
         Order.findById(id, (err, item) => {
+            if(item.user != req.session.userId){
+                res.status(403).send({error: 'Permission denied.'})
+                return;
+            }
             if(err){
                 res.send({error: 'Order does not exists'});
             }else{
