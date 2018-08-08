@@ -3,6 +3,7 @@ module.exports = function(app){
     app.get('/cities', (req, res) => {
         try{
             const query = City.find();
+            query.sort('name');
             query.exec((err, result) => {
                 if(err){
                     res.send({'error': 'Error with cities.'});

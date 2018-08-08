@@ -6,20 +6,36 @@ module.exports = function(app){
     app.get('/orders', (req, res) => {
         try{
             const query = Order.find();
+            const countQuery = Order.find();
             const isCompleted = req.query && req.query['isCompleted'] || false;
             if(req.query && req.query['cityFrom']){
                 query.where('destinationFrom').equals(req.query['cityFrom']);
+                countQuery.where('destinationFrom').equals(req.query['cityFrom']);
             }
             if(req.query && req.query['cityTo']){
                 query.where('destinationTo').equals(req.query['cityTo']);
+                countQuery.where('destinationTo').equals(req.query['cityTo'])
+            }
+            if(req.query && req.query['offset']){
+                query.skip(parseInt(req.query['offset']));
             }
             query.where('isCompleted').equals(isCompleted);
+            countQuery.where('isCompleted').equals(isCompleted);
             query.populate('destinationFrom', 'name').populate('destinationTo', 'name');
-            query.exec((err, result) => {
+            countQuery.count((err, count) => {
                 if(err){
-                    res.send({'error': 'Error with orders.'});
+                    res.send({'error': 'Error with orders counting'});
                 }else{
-                    res.send(result);
+                    query.limit(10);
+                    query.sort('-created');
+                    query.exec((err, result) => {
+                        if(err){
+                            console.log(err);
+                            res.send({'error': 'Error with orders.'});
+                        }else{
+                            res.send({count, result});
+                        }
+                    });
                 }
             });
         }catch(exception){
@@ -63,7 +79,6 @@ module.exports = function(app){
         if(body){
             orderData.type = 'client';
             orderData.user = userId;
-            orderData.dateStart = Date.now();
             Order.create(orderData, (err, order) => {
                 let result = {}
                 if(err){
